@@ -16,6 +16,8 @@ module.exports = {
       return req;
     }
 
+    console.log(token);
+
     try {
       const { data } = jwt.verify(token, secret, { maxAge: expiration });
       req.user = data;
@@ -24,6 +26,29 @@ module.exports = {
     }
 
     return req;
+  },
+  expressAuthMiddleware: (req, res, next) => {
+    // allows token to be sent via req.body, req.query, or headers
+
+    let token = req.headers.authorization; 
+    console.log(token);
+    if (req.headers.authorization) {
+      token = token.split(' ').pop().trim();
+    }
+
+    if (!token) {
+      return req;
+    }
+
+    console.log(token);
+
+    jwt.verify(token, secret, { maxAge: expiration }, (err, user) => {
+      if (err) {
+        console.log(err);
+      }
+      req.user = user;
+      next()
+    });
   },
   signToken: function ({ firstName, email, _id }) {
     const payload = { firstName, email, _id };

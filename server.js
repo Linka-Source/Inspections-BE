@@ -4,7 +4,7 @@ const logger = require('morgan');
 const { ApolloServer } = require('apollo-server-express');
 const {Todo} = require("./models")
 const { typeDefs, resolvers } = require('./schemas');
-const { authMiddleware } = require('./utils/auth');
+const { authMiddleware, expressAuthMiddleware } = require('./utils/auth');
 const db = require('./config/connection');
 const cors = require('cors')
 const PORT = process.env.PORT || 3001;
@@ -16,20 +16,26 @@ const server = new ApolloServer({
 });
 
 app.use(logger('dev'));
+app.options('*', cors()) // preflight
 app.use(cors())
+
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
+// app.use(expressAuthMiddleware)
 
 app.get('/todos', async (req, res) => {
   const todos = await Todo.find();
-      
-      res.json(todos);
+    res.json(todos);
 });
 
-app.post('/todo/new', (req, res) => {
+app.post('/todo/new', expressAuthMiddleware, async (req, res) => {
+  console.log(req.body);
   const todo = new Todo({
-      text: req.body.text
+      text: req.body.text,
+      todoOwner: req.user._id
   });
 
-  todo.save();
+  await todo.save();
 
   res.json(todo);
 });
@@ -52,8 +58,7 @@ app.get('/todo/complete/:id', async (req, res) => {
 
 server.applyMiddleware({ app });
 
-app.use(express.urlencoded({ extended: false }));
-app.use(express.json());
+
 
 db.once('open', () => {
   app.listen(PORT, () => {
