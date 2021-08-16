@@ -40,13 +40,11 @@ module.exports = {
       return req;
     }
 
-    console.log(token);
-
-    jwt.verify(token, secret, { maxAge: expiration }, (err, user) => {
+    jwt.verify(token, secret, { maxAge: expiration }, (err, {data}) => {
       if (err) {
         console.log(err);
       }
-      req.user = user;
+      req.user = data;
       next()
     });
   },

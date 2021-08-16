@@ -23,13 +23,13 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 // app.use(expressAuthMiddleware)
 
-app.get('/todos', async (req, res) => {
-  const todos = await Todo.find();
+app.get('/todos', expressAuthMiddleware,  async (req, res) => {
+  const todos = await Todo.find({todoOwner: req.user._id}).populate('todoOwner')
     res.json(todos);
 });
 
 app.post('/todo/new', expressAuthMiddleware, async (req, res) => {
-  console.log(req.body);
+  console.log(req.user);
   const todo = new Todo({
       text: req.body.text,
       todoOwner: req.user._id
